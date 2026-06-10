@@ -62,6 +62,37 @@ async def main():
 asyncio.run(main())
 ```
 
+## Video, img2img, ControlNet, LoRAs — the full Grid
+
+The OpenAI-compatible surface covers text and basic txt2img. For everything
+else the Grid can do, use `client.grid`, which talks to the native queue:
+
+```python
+client = AIPG()
+
+# Video — param names (length, fps, motion) depend on the model:
+result = client.grid.video(
+    prompt="a timelapse of a city at night",
+    models=["LTX-2"],
+    width=768, height=512, length=97,
+)
+
+# img2img / ControlNet / LoRAs — anything the workers support:
+result = client.grid.image(
+    prompt="make it watercolor",
+    models=["FLUX.1-dev"],
+    source_image="<base64>",
+    loras=[{"name": "watercolor", "model": 1.0}],
+)
+
+# Or full control with a raw payload:
+result = client.grid.generate({"prompt": "...", "models": [...], "params": {...}})
+```
+
+`client.grid` submits, polls, and returns the finished result. Pass
+`wait=False` to get the job id back immediately and poll yourself with
+`client.grid.status(job_id)`.
+
 ## It's just OpenAI underneath
 
 `AIPG` subclasses `openai.OpenAI`, so anything the OpenAI SDK does — images,

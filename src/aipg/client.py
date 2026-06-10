@@ -14,6 +14,8 @@ from typing import List, Optional
 
 from openai import AsyncOpenAI, OpenAI
 
+from .grid import AsyncGridRaw, GridRaw
+
 DEFAULT_BASE_URL = "https://api.aipowergrid.io/v1"
 API_KEY_ENV = "AIPG_API_KEY"
 
@@ -43,6 +45,9 @@ class AIPG(OpenAI):
 
     def __init__(self, api_key: Optional[str] = None, base_url: str = DEFAULT_BASE_URL, **kwargs):
         super().__init__(api_key=_resolve_key(api_key), base_url=base_url, **kwargs)
+        # Raw-Grid access (video, img2img, ControlNet, LoRAs) beyond the
+        # OpenAI-compatible surface. See aipg.grid.GridRaw.
+        self.grid = GridRaw(self.api_key, str(self.base_url))
 
     def online_models(self) -> List[str]:
         """Return the model IDs currently served by connected workers.
@@ -59,6 +64,7 @@ class AsyncAIPG(AsyncOpenAI):
 
     def __init__(self, api_key: Optional[str] = None, base_url: str = DEFAULT_BASE_URL, **kwargs):
         super().__init__(api_key=_resolve_key(api_key), base_url=base_url, **kwargs)
+        self.grid = AsyncGridRaw(self.api_key, str(self.base_url))
 
     async def online_models(self) -> List[str]:
         """Async variant of :meth:`AIPG.online_models`."""
