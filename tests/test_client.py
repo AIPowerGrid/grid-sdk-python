@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from aipg import AIPG, AsyncAIPG, DEFAULT_BASE_URL
+from grid_sdk import AIPG, AsyncAIPG, DEFAULT_BASE_URL
 from openai import AsyncOpenAI, OpenAI
 
 

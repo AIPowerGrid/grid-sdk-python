@@ -3,7 +3,7 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "aipg"
+name = "grid-sdk"
 version = "0.1.0"
 description = "Python SDK for AI Power Grid — free, decentralized, OpenAI-compatible AI inference."
 readme = "README.md"
@@ -21,7 +21,7 @@ test = ["pytest", "pytest-asyncio", "respx", "httpx"]
 [project.urls]
 Homepage = "https://aipowergrid.io"
 Documentation = "https://aipowergrid.io/docs"
-Repository = "https://github.com/AIPowerGrid/aipg-sdk-python"
+Repository = "https://github.com/AIPowerGrid/grid-sdk-python"
 
 [tool.setuptools.packages.find]
 where = ["src"]

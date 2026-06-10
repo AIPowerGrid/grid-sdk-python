@@ -10,8 +10,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from aipg import AIPG
-from aipg.grid import GridRaw, _derive_v2_base
+from grid_sdk import AIPG
+from grid_sdk.grid import GridRaw, _derive_v2_base
 
 
 # ── base derivation ──

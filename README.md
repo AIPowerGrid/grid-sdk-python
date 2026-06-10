@@ -10,7 +10,7 @@ OpenAI SDK works unchanged.
 ## Install
 
 ```bash
-pip install aipg
+pip install grid-sdk
 ```
 
 ## Quick start
@@ -19,9 +19,9 @@ Get a free API key at [api.aipowergrid.io/register](https://api.aipowergrid.io/r
 then set it as `AIPG_API_KEY`:
 
 ```python
-from aipg import AIPG
+from grid_sdk import Grid
 
-client = AIPG()  # reads AIPG_API_KEY from the environment
+client = Grid()  # reads AIPG_API_KEY from the environment
 
 stream = client.chat.completions.create(
     model="grid/llama-3.3-70b-versatile",
@@ -38,7 +38,7 @@ The Grid's available models change as workers connect and disconnect. Don't
 hardcode a model blindly — ask which ones are servable right now:
 
 ```python
-client = AIPG()
+client = Grid()
 print(client.online_models())
 # ['grid/llama-3.3-70b-versatile', 'grid/qwen3-32b', ...]
 ```
@@ -49,10 +49,10 @@ An empty list means no workers are connected — requests will 503 until one is.
 
 ```python
 import asyncio
-from aipg import AsyncAIPG
+from grid_sdk import AsyncGrid
 
 async def main():
-    client = AsyncAIPG()
+    client = AsyncGrid()
     resp = await client.chat.completions.create(
         model="grid/llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": "Hi"}],
@@ -68,7 +68,7 @@ The OpenAI-compatible surface covers text and basic txt2img. For everything
 else the Grid can do, use `client.grid`, which talks to the native queue:
 
 ```python
-client = AIPG()
+client = Grid()
 
 # Video — param names (length, fps, motion) depend on the model:
 result = client.grid.video(
@@ -95,7 +95,7 @@ result = client.grid.generate({"prompt": "...", "models": [...], "params": {...}
 
 ## It's just OpenAI underneath
 
-`AIPG` subclasses `openai.OpenAI`, so anything the OpenAI SDK does — images,
+`Grid` subclasses `openai.OpenAI`, so anything the OpenAI SDK does — images,
 tool calling, structured output, the full `.chat`/`.images`/`.models` surface —
 works here too. You can also point existing OpenAI code at the Grid by setting
 `base_url="https://api.aipowergrid.io/v1"` if you'd rather not switch packages.
@@ -104,9 +104,9 @@ works here too. You can also point existing OpenAI code at the Grid by setting
 
 | | |
 |---|---|
-| `AIPG(api_key=...)` | Explicit key (overrides env) |
+| `Grid(api_key=...)` | Explicit key (overrides env) |
 | `AIPG_API_KEY` | Env var read when no key is passed |
-| `AIPG(base_url=...)` | Override the endpoint (default `https://api.aipowergrid.io/v1`) |
+| `Grid(base_url=...)` | Override the endpoint (default `https://api.aipowergrid.io/v1`) |
 
 ## Links
 
