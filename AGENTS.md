@@ -51,7 +51,7 @@ the native v2 generation queue: video / img2img / ControlNet / LoRAs). Published
 
 ## Local Contracts
 
-- **Inherit org engineering standards:** `/Users/j/fix-axios-vuln/aipg-documentation/engineering-standards/`
+- **Inherit org engineering standards:** `aipg-documentation/engineering-standards/`
   (core + `git.md` + the matching language file).
 - **Stay a thin layer.** The OpenAI-compatible surface comes from subclassing `openai`; do
   not re-wrap or shadow it. Only override defaults (base URL, key source) and add helpers.
