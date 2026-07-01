@@ -17,7 +17,7 @@ raw-Grid escape hatch (`grid.py`) for generation beyond the `/v1` surface.
 ## Local Contracts
 
 - **Two base URLs, one input.** Clients take the OpenAI base (`…/v1`). `grid.py`'s
-  `_derive_v2_base` strips a trailing `/v1` and appends `/api/v2` for the native queue.
+  GridRaw/AsyncGridRaw POST synchronously to /v1/images/generations and /v1/videos/generations.
   Keep this derivation correct if either base shape changes.
 - **Auth header differs by surface.** The OpenAI surface uses the `openai` client's bearer
   auth; the raw-Grid surface sends the key as the `apikey` header. Do not conflate them.

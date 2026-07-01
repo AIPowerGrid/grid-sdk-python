@@ -24,7 +24,7 @@ from grid_sdk import Grid
 client = Grid()  # reads AIPG_API_KEY from the environment
 
 stream = client.chat.completions.create(
-    model="grid/llama-3.3-70b-versatile",
+    model="gpt-oss-120b",
     messages=[{"role": "user", "content": "Explain AI Power Grid in one line."}],
     stream=True,
 )
@@ -40,7 +40,7 @@ hardcode a model blindly — ask which ones are servable right now:
 ```python
 client = Grid()
 print(client.online_models())
-# ['grid/llama-3.3-70b-versatile', 'grid/qwen3-32b', ...]
+# ['gpt-oss-120b', 'qwen3-27b', ...]
 ```
 
 An empty list means no workers are connected — requests will 503 until one is.
@@ -54,7 +54,7 @@ from grid_sdk import AsyncGrid
 async def main():
     client = AsyncGrid()
     resp = await client.chat.completions.create(
-        model="grid/llama-3.3-70b-versatile",
+        model="gpt-oss-120b",
         messages=[{"role": "user", "content": "Hi"}],
     )
     print(resp.choices[0].message.content)
@@ -73,14 +73,14 @@ client = Grid()
 # Video — param names (length, fps, motion) depend on the model:
 result = client.grid.video(
     prompt="a timelapse of a city at night",
-    models=["LTX-2"],
+    models=["LTX-2.3"],
     width=768, height=512, length=97,
 )
 
 # img2img / ControlNet / LoRAs — anything the workers support:
 result = client.grid.image(
     prompt="make it watercolor",
-    models=["FLUX.1-dev"],
+    models=["FLUX.2 Klein 4B FP8"],
     source_image="<base64>",
     loras=[{"name": "watercolor", "model": 1.0}],
 )
