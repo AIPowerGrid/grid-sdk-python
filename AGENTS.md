@@ -38,9 +38,12 @@ concrete detail in children. Delete stale notes instead of explaining history.
 
 A thin Python client for the Grid API. The Grid speaks the OpenAI protocol, so the SDK
 subclasses the official `openai` client, pre-points it at the Grid, reads the key from the
-environment, and adds Grid-specific conveniences (`online_models()`, and `client.grid` for
-the native v2 generation queue: video / img2img / ControlNet / LoRAs). Published to PyPI as
-`grid-sdk`; importable as `grid_sdk`.
+environment, and adds Grid-specific conveniences (`online_models()`, and `client.grid` for the
+native SYNCHRONOUS media endpoints: `/v1/images/generations` (video / img2img / ControlNet /
+LoRAs / styles) and `/v1/videos/generations` — the call returns the finished result, no
+submit/poll). The retired horde `/api/v2` async queue is NOT used. Published to PyPI as
+`grid-sdk`; importable as `grid_sdk`. Co-canonical peer of the JS SDK `../grid-sdk-js`
+(npm `grid-ai`) — keep the two SDKs' surfaces aligned.
 
 ## Ownership
 
