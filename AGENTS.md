@@ -49,6 +49,7 @@ submit/poll). The retired horde `/api/v2` async queue is NOT used. Published to 
 
 - **`src/grid_sdk/`** — the package (clients + raw-Grid helpers). Owned in its own AGENTS.md.
 - **`tests/`** — pytest suite (`test_client.py`, `test_grid.py`); uses `respx` to mock HTTP.
+  Owned in its own AGENTS.md.
 - **`pyproject.toml`** — setuptools build, `src/` layout, deps, pytest config.
 - `dist/`, `.venv/`, `*.egg-info/` — build/vendored artifacts; do not edit or document.
 
@@ -63,6 +64,7 @@ submit/poll). The retired horde `/api/v2` async queue is NOT used. Published to 
 - **Public API is `__init__.__all__`:** `Grid`, `AsyncGrid`, `AIPG`, `AsyncAIPG`,
   `DEFAULT_BASE_URL`. `AIPG`/`AsyncAIPG` are aliases of `Grid`/`AsyncGrid` and must stay so.
 - **Keep `__version__` (in `__init__.py`) in sync with `version` in `pyproject.toml`.**
+- Package metadata, source SPDX headers, and `LICENSE` all use MIT.
 
 ## Work Guidance
 
@@ -71,9 +73,10 @@ submit/poll). The retired horde `/api/v2` async queue is NOT used. Published to 
 
 ## Verification
 
-- `pytest` (install with `pip install -e ".[test]"`). 18 tests across client + raw-Grid; HTTP
-  is mocked via `respx`, so no live Grid is required.
+- `pytest` (install with `pip install -e ".[test]"`). Client and raw-Grid HTTP
+  are mocked via `respx`, so no live Grid is required.
 
 ## Child DOX Index
 
 - [src/grid_sdk/AGENTS.md](src/grid_sdk/AGENTS.md) — the SDK package: clients + raw-Grid access.
+- [tests/AGENTS.md](tests/AGENTS.md) — mocked Python SDK contract tests.

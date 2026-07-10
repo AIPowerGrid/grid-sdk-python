@@ -15,8 +15,8 @@ pip install grid-sdk
 
 ## Quick start
 
-Get a free API key at [api.aipowergrid.io/register](https://api.aipowergrid.io/register),
-then set it as `AIPG_API_KEY`:
+Sign in at the [Grid developer console](https://console.aipowergrid.io/dashboard/api-key),
+create an API key, then set it as `AIPG_API_KEY`:
 
 ```python
 from grid_sdk import Grid
@@ -64,17 +64,18 @@ asyncio.run(main())
 
 ## Video, img2img, ControlNet, LoRAs — the full Grid
 
-The OpenAI-compatible surface covers text and basic txt2img. For everything
-else the Grid can do, use `client.grid`, which talks to the native queue:
+The OpenAI-compatible surface covers text and basic txt2img. For the full media
+parameter surface, use `client.grid`, which calls the synchronous `/v1` image
+and video endpoints:
 
 ```python
 client = Grid()
 
-# Video — param names (length, fps, motion) depend on the model:
+# Video:
 result = client.grid.video(
     prompt="a timelapse of a city at night",
-    models=["LTX-2.3"],
-    width=768, height=512, length=97,
+    model="LTX-2.3",
+    width=768, height=512, seconds=4, fps=24,
 )
 
 # img2img / ControlNet / LoRAs — anything the workers support:
@@ -89,9 +90,9 @@ result = client.grid.image(
 result = client.grid.generate({"prompt": "...", "models": [...], "params": {...}})
 ```
 
-`client.grid` submits, polls, and returns the finished result. Pass
-`wait=False` to get the job id back immediately and poll yourself with
-`client.grid.status(job_id)`.
+`client.grid` waits for the synchronous Grid response and returns the finished
+OpenAI-shaped result. Use `timeout` for long media jobs; there is no SDK
+submit/poll mode on this `/v1` client.
 
 ## It's just OpenAI underneath
 
@@ -111,7 +112,7 @@ works here too. You can also point existing OpenAI code at the Grid by setting
 ## Links
 
 - [Docs](https://aipowergrid.io/docs)
-- [Get a free API key](https://api.aipowergrid.io/register)
+- [Get an API key](https://console.aipowergrid.io/dashboard/api-key)
 - [Discord](https://discord.gg/W9D8j6HCtC)
 
 ## License
