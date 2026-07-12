@@ -26,6 +26,8 @@ raw-Grid escape hatch (`grid.py`) for generation beyond the `/v1` surface.
   Errors raise `GridError`; preserve that contract.
 - **Builders are thin.** `image()`/`video()` set sane defaults and forward all extra
   keywords into `params`. Add convenience, never gate features the workers support.
+- `credits()` reads Core's canonical three-pocket account view; SDKs do not
+  calculate allowances or maintain local free-use counters.
 - The sync and async classes are mirror twins — change both together.
 
 ## Work Guidance

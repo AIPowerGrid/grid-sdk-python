@@ -25,7 +25,7 @@ def _resolve_key(api_key: Optional[str]) -> str:
     if not key:
         raise ValueError(
             f"No API key provided. Pass api_key=... or set the {API_KEY_ENV} "
-            f"environment variable. Get a free key at https://api.aipowergrid.io/register"
+            f"environment variable. Create a key at https://console.aipowergrid.io/dashboard/api-key"
         )
     return key
 

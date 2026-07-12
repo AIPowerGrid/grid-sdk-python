@@ -45,6 +45,16 @@ print(client.online_models())
 
 An empty list means no workers are connected — requests will 503 until one is.
 
+## Credits
+
+```python
+credits = client.grid.credits()
+print(credits["total_spendable_usd"])
+```
+
+This is Core's canonical promotional, daily-free, and purchased account view.
+The SDK does not maintain a local free-use counter.
+
 ## Async
 
 ```python

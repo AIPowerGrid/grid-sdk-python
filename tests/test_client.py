@@ -35,7 +35,7 @@ def test_missing_key_raises_with_helpful_message(monkeypatch):
     with pytest.raises(ValueError) as exc:
         AIPG()
     assert "AIPG_API_KEY" in str(exc.value)
-    assert "register" in str(exc.value)  # points the user at getting a key
+    assert "console.aipowergrid.io/dashboard/api-key" in str(exc.value)
 
 
 def test_default_base_url_points_at_grid():

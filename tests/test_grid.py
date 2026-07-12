@@ -6,10 +6,10 @@ synchronous /v1 media endpoints (img2img, LoRAs, passthrough params). Network
 calls are stubbed.
 """
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from grid_sdk import AIPG
-from grid_sdk.grid import GridRaw
+from grid_sdk.grid import AsyncGridRaw, GridRaw
 
 
 def test_client_exposes_grid():
@@ -17,6 +17,22 @@ def test_client_exposes_grid():
     assert isinstance(client.grid, GridRaw)
     assert client.grid._base == "https://api.aipowergrid.io/v1"
     assert client.grid._headers["Authorization"] == "Bearer k"
+
+
+def test_credits_uses_canonical_account_endpoint():
+    grid = GridRaw("k", "https://api.aipowergrid.io/v1")
+    grid._get = MagicMock(return_value={"promotional": {}, "free": {}, "paid": {}})
+    result = grid.credits()
+    grid._get.assert_called_once_with("/account/credits", 30.0)
+    assert set(result) == {"promotional", "free", "paid"}
+
+
+async def test_async_credits_uses_canonical_account_endpoint():
+    grid = AsyncGridRaw("k", "https://api.aipowergrid.io/v1")
+    grid._get = AsyncMock(return_value={"total_spendable_usd": 0.15})
+    result = await grid.credits()
+    grid._get.assert_awaited_once_with("/account/credits", 30.0)
+    assert result["total_spendable_usd"] == 0.15
 
 
 def _capture(grid: GridRaw):

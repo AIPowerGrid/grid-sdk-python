@@ -120,6 +120,17 @@ class GridRaw:
                 raise GridError(f"{path} failed [{r.status_code}]: {r.text[:300]}")
             return r.json()
 
+    def _get(self, path: str, timeout: float = 30.0) -> Dict[str, Any]:
+        with httpx.Client(timeout=timeout) as c:
+            r = c.get(f"{self._base}{path}", headers=self._headers)
+            if r.status_code != 200:
+                raise GridError(f"{path} failed [{r.status_code}]: {r.text[:300]}")
+            return r.json()
+
+    def credits(self, *, timeout: float = 30.0) -> Dict[str, Any]:
+        """Return promotional, daily-free, purchased, and spendable credit pockets."""
+        return self._get("/account/credits", timeout)
+
     def generate(
         self, body: Dict[str, Any], *, endpoint: str = "/images/generations", timeout: float = 300.0
     ) -> Dict[str, Any]:
@@ -189,6 +200,17 @@ class AsyncGridRaw:
             if r.status_code != 200:
                 raise GridError(f"{path} failed [{r.status_code}]: {r.text[:300]}")
             return r.json()
+
+    async def _get(self, path: str, timeout: float = 30.0) -> Dict[str, Any]:
+        async with httpx.AsyncClient(timeout=timeout) as c:
+            r = await c.get(f"{self._base}{path}", headers=self._headers)
+            if r.status_code != 200:
+                raise GridError(f"{path} failed [{r.status_code}]: {r.text[:300]}")
+            return r.json()
+
+    async def credits(self, *, timeout: float = 30.0) -> Dict[str, Any]:
+        """Async variant of :meth:`GridRaw.credits`."""
+        return await self._get("/account/credits", timeout)
 
     async def generate(
         self, body: Dict[str, Any], *, endpoint: str = "/images/generations", timeout: float = 300.0
