@@ -51,6 +51,8 @@ submit/poll). The retired horde `/api/v2` async queue is NOT used. Published to 
 - **`tests/`** — pytest suite (`test_client.py`, `test_grid.py`); uses `respx` to mock HTTP.
   Owned in its own AGENTS.md.
 - **`pyproject.toml`** — setuptools build, `src/` layout, deps, pytest config.
+- **`.github/workflows/secret-scan.yml`, `.gitleaks.toml`, and `.gitleaksignore`** —
+  checksum-verified complete-history secret scanning with exact historical fingerprints only.
 - `dist/`, `.venv/`, `*.egg-info/` — build/vendored artifacts; do not edit or document.
 
 ## Local Contracts
@@ -75,6 +77,8 @@ submit/poll). The retired horde `/api/v2` async queue is NOT used. Published to 
 
 - `pytest` (install with `pip install -e ".[test]"`). Client and raw-Grid HTTP
   are mocked via `respx`, so no live Grid is required.
+- `gitleaks git . --log-opts=HEAD --config .gitleaks.toml --redact --verbose`
+  scans the complete history reachable from the candidate commit.
 
 ## Child DOX Index
 
