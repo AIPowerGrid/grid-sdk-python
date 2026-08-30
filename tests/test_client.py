@@ -49,7 +49,7 @@ def test_base_url_override():
 
 
 def test_is_an_openai_client():
-    # Subclassing means all openai features (chat, images, streaming) come free.
+    # Subclassing keeps all OpenAI client features (chat, images, streaming).
     assert isinstance(AIPG(api_key="k"), OpenAI)
     assert isinstance(AsyncAIPG(api_key="k"), AsyncOpenAI)
 
