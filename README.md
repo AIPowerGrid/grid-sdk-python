@@ -1,6 +1,6 @@
 # AI Power Grid — Python SDK
 
-Free, decentralized, OpenAI-compatible AI inference.
+Open-model, OpenAI-compatible inference across community-operated GPUs.
 
 The Grid API speaks the OpenAI protocol, so this SDK is a thin layer over the
 official `openai` package: it points at the Grid, reads your key from the
