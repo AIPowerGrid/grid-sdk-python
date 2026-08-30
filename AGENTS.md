@@ -41,8 +41,8 @@ subclasses the official `openai` client, pre-points it at the Grid, reads the ke
 environment, and adds Grid-specific conveniences (`online_models()`, and `client.grid` for the
 native SYNCHRONOUS media endpoints: `/v1/images/generations` (video / img2img / ControlNet /
 LoRAs / styles) and `/v1/videos/generations` — the call returns the finished result, no
-submit/poll). The retired horde `/api/v2` async queue is NOT used. Published to PyPI as
-`grid-sdk`; importable as `grid_sdk`. Co-canonical peer of the JS SDK `../grid-sdk-js`
+submit/poll). The retired horde `/api/v2` async queue is NOT used. Its PyPI package name is
+`grid-sdk`; it is importable as `grid_sdk`. Co-canonical peer of the JS SDK `../grid-sdk-js`
 (npm `grid-ai`) — keep the two SDKs' surfaces aligned.
 
 ## Ownership
@@ -53,6 +53,9 @@ submit/poll). The retired horde `/api/v2` async queue is NOT used. Published to 
 - **`pyproject.toml`** — setuptools build, `src/` layout, deps, pytest config.
 - **`.github/workflows/secret-scan.yml`, `.gitleaks.toml`, and `.gitleaksignore`** —
   checksum-verified complete-history secret scanning with exact historical fingerprints only.
+- **`.github/workflows/release.yml`** — release-published, tag-bound PyPI
+  trusted publishing. It uses GitHub OIDC and the protected `pypi`
+  environment; registry tokens do not belong in GitHub secrets.
 - `dist/`, `.venv/`, `*.egg-info/` — build/vendored artifacts; do not edit or document.
 
 ## Local Contracts
@@ -67,6 +70,9 @@ submit/poll). The retired horde `/api/v2` async queue is NOT used. Published to 
   `DEFAULT_BASE_URL`. `AIPG`/`AsyncAIPG` are aliases of `Grid`/`AsyncGrid` and must stay so.
 - **Keep `__version__` (in `__init__.py`) in sync with `version` in `pyproject.toml`.**
 - Package metadata, source SPDX headers, and `LICENSE` all use MIT.
+- **Release identity:** publish only a non-prerelease GitHub Release whose
+  `v<version>` tag exactly matches `pyproject.toml` and `__version__`. The
+  release workflow tests the built wheel before OIDC publication.
 
 ## Work Guidance
 
