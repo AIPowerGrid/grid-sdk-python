@@ -70,8 +70,9 @@ jobs:
         run: |
           wheel="$(find dist -maxdepth 1 -name '*.whl' -print -quit)"
           test -n "$wheel"
-          python -m pip install "$wheel" pytest pytest-asyncio respx httpx
-          pytest tests/ -v
+          python -m pip install "$wheel"
           python -c 'import grid_sdk; print(grid_sdk.__version__)'
+          python -m pip install pytest pytest-asyncio respx
+          pytest tests/ -v
       - name: Publish with PyPI trusted publishing
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2

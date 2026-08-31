@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "grid-sdk"
-version = "0.1.1"
+version = "0.1.2"
 description = "Python SDK for AI Power Grid open-model, OpenAI-compatible inference."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -14,6 +14,7 @@ authors = [{ name = "AI Power Grid" }]
 keywords = ["ai", "llm", "inference", "openai", "decentralized", "aipg"]
 dependencies = [
     "openai>=1.0.0",
+    "httpx>=0.23.0,<1.0.0",
 ]
 
 [project.optional-dependencies]

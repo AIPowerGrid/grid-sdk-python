@@ -26,4 +26,4 @@ with the `openai` package, you can do here — same `.chat`, `.images`,
 from .client import AIPG, AsyncAIPG, AsyncGrid, Grid, DEFAULT_BASE_URL
 
 __all__ = ["Grid", "AsyncGrid", "AIPG", "AsyncAIPG", "DEFAULT_BASE_URL"]
-__version__ = "0.1.1"
+__version__ = "0.1.2"

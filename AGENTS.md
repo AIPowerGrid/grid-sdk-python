@@ -64,15 +64,18 @@ submit/poll). The retired horde `/api/v2` async queue is NOT used. Its PyPI pack
   (core + `git.md` + the matching language file).
 - **Stay a thin layer.** The OpenAI-compatible surface comes from subclassing `openai`; do
   not re-wrap or shadow it. Only override defaults (base URL, key source) and add helpers.
-- **One runtime dependency:** `openai>=1.0.0` (`httpx` ships transitively with it). Do not
-  add dependencies casually — thinness is the product.
+- **Two direct runtime dependencies:** `openai>=1.0.0` provides the compatible client;
+  `httpx>=0.23.0,<1.0.0` supports native Grid media calls. Keep both explicit because
+  recent OpenAI SDK releases may install `httpx2` instead of the `httpx` import used here.
+  Do not add dependencies casually — thinness is the product.
 - **Public API is `__init__.__all__`:** `Grid`, `AsyncGrid`, `AIPG`, `AsyncAIPG`,
   `DEFAULT_BASE_URL`. `AIPG`/`AsyncAIPG` are aliases of `Grid`/`AsyncGrid` and must stay so.
 - **Keep `__version__` (in `__init__.py`) in sync with `version` in `pyproject.toml`.**
 - Package metadata, source SPDX headers, and `LICENSE` all use MIT.
 - **Release identity:** publish only a non-prerelease GitHub Release whose
   `v<version>` tag exactly matches `pyproject.toml` and `__version__`. The
-  release workflow tests the built wheel before OIDC publication.
+  release workflow imports the wheel with runtime dependencies only, then runs
+  the test suite before OIDC publication.
 
 ## Work Guidance
 

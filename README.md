@@ -2,9 +2,8 @@
 
 Open-model, OpenAI-compatible inference across community-operated GPUs.
 
-> **Release status:** `grid-sdk` is staged for its initial PyPI publication.
-> The install command below becomes available when the first verified release
-> is published; until then, use the OpenAI SDK with the Grid base URL shown below.
+> **Release status:** `grid-sdk` is published on PyPI. Use a current release so
+> the OpenAI-compatible client and native Grid media helpers stay in sync.
 
 The Grid API speaks the OpenAI protocol, so this SDK is a thin layer over the
 official `openai` package: it points at the Grid, reads your key from the
