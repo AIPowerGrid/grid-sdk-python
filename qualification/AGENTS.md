@@ -17,6 +17,11 @@ built JavaScript SDK. Not part of runtime packages or ordinary SDK unit tests.
 - Exercise generated/audio/video modes with/without lost accepted replies;
   require one job/hold/payout and one submission per SDK. Recovery after
   admission rollback must be GET-only.
+- Also exercise the separate Dev Ingredients audio/appearance profile using a
+  real decoded PNG/WAV and an explicit isolated fixture tariff. Require the
+  appearance worker feature, no opening pin, distinct private bindings and
+  100,834-micro hold/charge. This does not price/admit the real candidate or
+  qualify native GPU/R2/identity, even when the SQL proof runs on Postgres.
 - Real JavaScript transport cases additionally serve the isolated router on an
   ephemeral IPv4 loopback socket and run the peer's `core-http.mjs`, without
   mocking fetch. Supply fixture credentials over stdin only and clear the child

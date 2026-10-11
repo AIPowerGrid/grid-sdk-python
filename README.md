@@ -167,9 +167,19 @@ URLs. Audio uses stereo PCM16 WAV at 48 kHz, exactly `frames * 2000` samples
 at 24 fps. Video uses frame-matched 24-fps H.264 MP4 plus a separate WAV and
 explicit output size. Current LTX frame/recipe gates remain authoritative.
 An `image` or timed `keyframes` pin constrains actual frames: **it is not an
-appearance-only identity reference**. Character-reference adapters are separate
-qualification work, not supported by this helper. x402 video payments are a
-proposal, not an implemented SDK payment rail.
+appearance-only identity reference**.
+
+The separate, unpriced **`LTX-2.5 Dev BF16 Ingredients`** candidate accepts
+`reference_image` as a 768x448 PNG, exact-duration `reference_audio`, and optional
+frame-matched `reference_video`, at 121 frames/24 fps, 40 steps and CFG 2.
+Use explicit `size="768x448"` and no `image`/`keyframes`. `reference_strength`
+defaults to 1; with video, `guide_strength` defaults to 0.5 and
+`motion_attention_strength` to 0.25. Core validates these controls and decodes
+every source. The helper forwards them; it never executes an adapter or turns
+the PNG into frame zero. Source-health features do not mean this recipe is
+admitted, priced or visually qualified. It is still dark, pending native Grid
+testing and model-use clearance. x402 video payments are a proposal, not an
+implemented SDK payment rail.
 
 ## It's just OpenAI underneath
 

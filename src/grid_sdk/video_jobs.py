@@ -251,6 +251,15 @@ def _submission(body: Mapping[str, object]) -> _Submission:
                 snapshot.get("reference_video")
                 and (not snapshot.get("reference_audio") or not snapshot.get("size"))
             )
+            or (
+                snapshot.get("reference_image")
+                and (
+                    snapshot.get("image")
+                    or snapshot.get("keyframes")
+                    or not snapshot.get("reference_audio")
+                    or not snapshot.get("size")
+                )
+            )
         ):
             raise ValueError
     except (ValueError, TypeError, OverflowError, RecursionError):
@@ -261,7 +270,11 @@ def _submission(body: Mapping[str, object]) -> _Submission:
         encoded,
         snapshot["model"],
         snapshot["max_cost_micro_usd"],
-        bool(snapshot.get("reference_audio") or snapshot.get("reference_video")),
+        bool(
+            snapshot.get("reference_audio")
+            or snapshot.get("reference_video")
+            or snapshot.get("reference_image")
+        ),
     )
 
 

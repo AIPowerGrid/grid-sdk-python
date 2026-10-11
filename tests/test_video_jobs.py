@@ -134,6 +134,19 @@ def test_missing_feature_never_posts(features: list) -> None:
         {"n": 2},
         {"image": "x", "keyframes": [{"image": "y"}]},
         {"reference_video": "x"},
+        {"reference_image": "x"},
+        {
+            "reference_image": "x",
+            "reference_audio": "y",
+            "size": "768x448",
+            "image": "z",
+        },
+        {
+            "reference_image": "x",
+            "reference_audio": "y",
+            "size": "768x448",
+            "keyframes": [{"image": "z"}],
+        },
     ],
 )
 def test_invalid_bodies_fail_before_network(changes: dict) -> None:
@@ -165,6 +178,43 @@ def test_lost_reply_recovers_by_header_without_post_retry_or_health() -> None:
     assert recover.calls.last.request.headers["X-Grid-User-Token"] == "fixture-token"
     assert str(recover.calls.last.request.url) == BASE + "/videos/jobs"
     assert submit.call_count == 1
+
+
+@respx.mock
+@pytest.mark.asyncio
+@pytest.mark.parametrize("motion", [False, True])
+async def test_appearance_sources_survive_lost_reply_without_becoming_opening_pins(
+    motion: bool,
+) -> None:
+    health()
+    model = "LTX-2.5 Dev BF16 Ingredients"
+    body = {
+        **BODY,
+        "model": model,
+        "size": "768x448",
+        "frames": 121,
+        "reference_image": "data:image/png;base64,fixture",
+        "reference_audio": "data:audio/wav;base64,fixture",
+        "reference_strength": 1.0,
+    }
+    if motion:
+        body.update(
+            reference_video="data:video/mp4;base64,fixture",
+            guide_strength=0.5,
+            motion_attention_strength=0.25,
+        )
+    post = respx.post(BASE + "/videos/jobs").mock(
+        side_effect=httpx.ReadTimeout("private fixture")
+    )
+    jobs = AsyncVideoJobs("fixture", BASE)
+    with pytest.raises(VideoJobError) as error:
+        await jobs.submit(body, idempotency_key=KEY)
+    assert error.value.submission_uncertain
+    wire = json.loads(post.calls.last.request.content)
+    assert wire == body and "image" not in wire and "keyframes" not in wire
+    respx.get(BASE + "/videos/jobs").respond(json=receipt(model=model))
+    assert (await jobs.recover(idempotency_key=KEY))["model"] == model
+    assert post.call_count == 1
 
 
 @respx.mock

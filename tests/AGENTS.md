@@ -11,6 +11,9 @@ Grid media helper.
 - `test_grid.py` - `/v1` image/video request and response behavior.
 - `test_video_jobs.py` - candidate async-job wire contract, source passthrough,
   delegation, no POST retry, GET recovery, bounded polling and receipt identity.
+  Separate appearance tests preserve PNG/audio/optional video and strengths
+  through lost-reply recovery, rejecting opening-pin conflicts before HTTP.
+  Inline fixture strings are transport-only, not decoded media/native proof.
 
 ## Local Contracts
 

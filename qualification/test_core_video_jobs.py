@@ -5,6 +5,7 @@ import asyncio
 import base64
 import contextlib
 import importlib.util
+import io
 import json
 import os
 import socket
@@ -20,13 +21,14 @@ import pytest
 from fastapi import FastAPI
 from grid_api.routers import video_jobs, videos
 from grid_api.routers.tests.test_video_jobs import stored
-from grid_api.services import accounts, credits, media_jobs
+from grid_api.services import accounts, credits, media_jobs, pricing
 from grid_api.services.tests.test_media_job_journal import (
     MODEL,
     counts,
     owner,
 )
 from grid_api.services.tests.test_video_sources import wav
+from PIL import Image
 
 pytest_plugins = (
     "grid_api.routers.tests.test_video_jobs",
@@ -44,12 +46,23 @@ spec.loader.exec_module(module)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("mode", ["generated", "audio", "video"])
+@pytest.mark.parametrize("mode", ["generated", "audio", "video", "appearance-audio"])
 @pytest.mark.parametrize("lost_reply", [False, True])
 async def test_sdk_core_auth_hold_recovery_and_js_parity(
     api, mp4, monkeypatch, mode, lost_reply
 ):
     client, aid, credential, settings, quota, _available = api
+    appearance = mode == "appearance-audio"
+    model = "LTX-2.5 Dev BF16 Ingredients" if appearance else MODEL
+    frames = 121 if appearance else 9
+    if appearance:
+        _available.return_value = [model]
+        # Isolated fixture tariff only: the real Ingredients recipe is dark/unpriced.
+        monkeypatch.setitem(
+            pricing.PRICING,
+            model.lower(),
+            pricing.ModelPrice(0, 0, video_per_second=0.02),
+        )
     app = client._transport.app
     features = [module.FEATURE, module.SOURCE_FEATURE]
 
@@ -80,16 +93,21 @@ async def test_sdk_core_auth_hold_recovery_and_js_parity(
     )
     key = str(uuid4())
     body = {
-        "model": MODEL,
+        "model": model,
         "prompt": "A synthetic red ball rolls",
-        "frames": 9,
+        "frames": frames,
         "fps": 24,
-        "size": "256x256",
+        "size": "768x448" if appearance else "256x256",
         "seed": 42,
-        "max_cost_micro_usd": 100_000,
+        "max_cost_micro_usd": 150_000 if appearance else 100_000,
     }
     if mode != "generated":
-        body["reference_audio"] = base64.b64encode(wav(9)).decode("ascii")
+        body["reference_audio"] = base64.b64encode(wav(frames)).decode("ascii")
+    if appearance:
+        image = io.BytesIO()
+        Image.new("RGB", (768, 448), "red").save(image, "PNG")
+        body["reference_image"] = base64.b64encode(image.getvalue()).decode("ascii")
+        body.update(steps=40, cfg_scale=2.0, reference_strength=1.0)
     if mode == "video":
         body["reference_video"] = base64.b64encode(mp4).decode("ascii")
     if lost_reply:
@@ -112,7 +130,17 @@ async def test_sdk_core_auth_hold_recovery_and_js_parity(
     assert await counts() == (1, 1, 0)
     quota.assert_awaited_once()
     row = await stored(pending["job_id"])
-    assert row["payload"]["recipe_inputs"].get("source_mode", "generated") == mode
+    assert row["payload"]["recipe_inputs"].get("source_mode", "generated") == (
+        "audio" if appearance else mode
+    )
+    if appearance:
+        assert row["payload"]["appearance_profile"] == "ingredients-dev-v1"
+        assert "source_image_url" not in row["payload"]
+        assert [item["role"] for item in row["payload"]["source_media"]] == [
+            "reference_image",
+            "reference_audio",
+        ]
+        assert pending["reserved_micro"] == 100_834
     assert pending["request_hash"] == video_jobs.request_hash(
         video_jobs.AsyncVideoRequest.model_validate(body)
     )
@@ -123,7 +151,7 @@ async def test_sdk_core_auth_hold_recovery_and_js_parity(
             payload=row["payload"],
             route_models=row["route_models"],
             preferred_worker="",
-            selected_model=MODEL,
+            selected_model=model,
             worker_id=worker,
             job_type="video",
             execution_token=token,
@@ -131,7 +159,7 @@ async def test_sdk_core_auth_hold_recovery_and_js_parity(
         == "claimed"
     )
     media = {
-        "model": MODEL,
+        "model": model,
         "worker": "synthetic-worker",
         "gen_time": 1.0,
         "recipe_root": row["payload"]["recipe_root"],
@@ -148,10 +176,10 @@ async def test_sdk_core_auth_hold_recovery_and_js_parity(
         job_id=row["job_id"],
         worker_id=str(worker),
         wallet="",
-        model=MODEL,
+        model=model,
         job_type="video",
         den=1.0,
-        output_units=9,
+        output_units=frames,
         prompt_hash="b" * 64,
         result_hash="c" * 64,
     )

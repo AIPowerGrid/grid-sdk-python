@@ -43,8 +43,12 @@ raw-Grid escape hatch (`grid.py`) for generation beyond the `/v1` surface.
   sanitize transport/HTTP errors. Delegated user tokens travel only in headers.
   Request bodies are bounded and money is at most `2**53 - 1` for JS parity.
 - `image`/`keyframes` are literal frame constraints, not character identity
-  references. Audio/video source admission remains gated by Core; no x402 rail
-  or private-appearance adapter is implemented by the SDK.
+  references. Separate `reference_image` PNG plus explicit audio/size forwards
+  the dark Ingredients recipe contract without creating frame pins. Reject
+  mixing these references with `image`/`keyframes` before HTTP. Core owns
+  decoding, fixed profile/knob validation, worker capabilities and admission;
+  source-health flags alone do not qualify appearance or enable its price.
+  No x402 rail or adapter execution is implemented by the SDK.
 
 ## Work Guidance
 
