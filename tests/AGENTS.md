@@ -30,6 +30,8 @@ Grid media helper.
 
 - Add a focused regression test with every public or wire-contract change.
 - Prefer respx assertions over implementation-specific internal mocks.
+- Tests must collect on the SDK's Python 3.9 minimum; postpone annotations
+  rather than evaluating newer union-type operators during import.
 
 ## Verification
 

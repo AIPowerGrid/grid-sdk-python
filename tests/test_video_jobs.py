@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: MIT
 """Wire contracts for the separate candidate /v1/videos/jobs client."""
 
+from __future__ import annotations
+
 import asyncio
 import copy
 import json
