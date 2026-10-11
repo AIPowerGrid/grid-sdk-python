@@ -194,6 +194,12 @@ AIPG_JS_VIDEO_QUALIFICATION=/absolute/path/to/js-peer/qualification/core-wire.mj
 Use an isolated scratch `CREDITS_TEST_DB_URL` for PostgreSQL; otherwise its
 cases skip and only SQLite is proved. Source decoder skips are not successful
 qualification. This harness does not run GPUs, use R2 or spend live credits.
+The JavaScript transport cases use unmocked fetch against a temporary IPv4
+loopback Core server, with fixture credentials supplied on stdin and no Core
+lifespan/background tasks. They require one actual POST, GET-only request and
+terminal recovery, plus real 401/403/404 ownership/scope checks. Local socket
+permission is required. Reply loss is a post-commit 503, not a network-outage
+test; the synthetic completion does not qualify actual video output.
 
 ## Config
 

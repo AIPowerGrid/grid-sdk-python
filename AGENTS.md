@@ -54,7 +54,8 @@ does not change those existing synchronous methods. The retired horde `/api/v2` 
   Owned in its own AGENTS.md.
 - **`pyproject.toml`** — setuptools build, `src/` layout, deps, pytest config.
 - **`qualification/`** - optional Core SQL/auth plus built-JS wire parity checks;
-  synthetic storage/workers only, explicitly selected dependency environment.
+  additional actual JS localhost HTTP submission/recovery, synthetic
+  storage/workers only, explicitly selected dependency environment.
 - **`.github/workflows/secret-scan.yml`, `.gitleaks.toml`, and `.gitleaksignore`** —
   checksum-verified complete-history secret scanning with exact historical fingerprints only.
 - **`.github/workflows/release.yml`** — release-published, tag-bound PyPI
