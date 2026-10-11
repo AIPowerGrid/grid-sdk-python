@@ -24,6 +24,10 @@ with the `openai` package, you can do here — same `.chat`, `.images`,
 """
 
 from .client import AIPG, AsyncAIPG, AsyncGrid, Grid, DEFAULT_BASE_URL
+from .video_jobs import AsyncVideoJobs, VideoJob, VideoJobError, VideoJobs, VideoMedia, VideoResult
 
-__all__ = ["Grid", "AsyncGrid", "AIPG", "AsyncAIPG", "DEFAULT_BASE_URL"]
-__version__ = "0.1.2"
+__all__ = [
+    "Grid", "AsyncGrid", "AIPG", "AsyncAIPG", "DEFAULT_BASE_URL",
+    "VideoJobs", "AsyncVideoJobs", "VideoJob", "VideoJobError", "VideoMedia", "VideoResult",
+]
+__version__ = "0.2.0a1"

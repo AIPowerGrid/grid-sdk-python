@@ -41,16 +41,20 @@ subclasses the official `openai` client, pre-points it at the Grid, reads the ke
 environment, and adds Grid-specific conveniences (`online_models()`, and `client.grid` for the
 native SYNCHRONOUS media endpoints: `/v1/images/generations` (video / img2img / ControlNet /
 LoRAs / styles) and `/v1/videos/generations` — the call returns the finished result, no
-submit/poll). The retired horde `/api/v2` async queue is NOT used. Its PyPI package name is
+submit/poll). A separate candidate `client.grid.video_jobs` exposes Core's
+default-off `/v1/videos/jobs` credit-backed submission/recovery contract; it
+does not change those existing synchronous methods. The retired horde `/api/v2` async queue is NOT used. Its PyPI package name is
 `grid-sdk`; it is importable as `grid_sdk`. Co-canonical peer of the JS SDK `../grid-sdk-js`
 (npm `grid-ai`) — keep the two SDKs' surfaces aligned.
 
 ## Ownership
 
 - **`src/grid_sdk/`** — the package (clients + raw-Grid helpers). Owned in its own AGENTS.md.
-- **`tests/`** — pytest suite (`test_client.py`, `test_grid.py`); uses `respx` to mock HTTP.
+- **`tests/`** — pytest suite (client, legacy media and durable video jobs); uses `respx` to mock HTTP.
   Owned in its own AGENTS.md.
 - **`pyproject.toml`** — setuptools build, `src/` layout, deps, pytest config.
+- **`qualification/`** - optional Core SQL/auth plus built-JS wire parity checks;
+  synthetic storage/workers only, explicitly selected dependency environment.
 - **`.github/workflows/secret-scan.yml`, `.gitleaks.toml`, and `.gitleaksignore`** —
   checksum-verified complete-history secret scanning with exact historical fingerprints only.
 - **`.github/workflows/release.yml`** — release-published, tag-bound PyPI
@@ -69,9 +73,13 @@ submit/poll). The retired horde `/api/v2` async queue is NOT used. Its PyPI pack
   recent OpenAI SDK releases may install `httpx2` instead of the `httpx` import used here.
   Do not add dependencies casually — thinness is the product.
 - **Public API is `__init__.__all__`:** `Grid`, `AsyncGrid`, `AIPG`, `AsyncAIPG`,
-  `DEFAULT_BASE_URL`. `AIPG`/`AsyncAIPG` are aliases of `Grid`/`AsyncGrid` and must stay so.
+  `DEFAULT_BASE_URL`, `VideoJobs`, `AsyncVideoJobs`, `VideoJob`, `VideoJobError`,
+  `VideoMedia`, `VideoResult`. `AIPG`/`AsyncAIPG` are aliases of `Grid`/`AsyncGrid` and must stay so.
 - **Keep `__version__` (in `__init__.py`) in sync with `version` in `pyproject.toml`.**
 - Package metadata, source SPDX headers, and `LICENSE` all use MIT.
+- Candidate video helpers are independently implemented MIT clients for the
+  wire protocol, not copies of AGPL Core/Director implementation. They never
+  retry POST, download media, hold funds, or claim a closed job was refunded.
 - **Release identity:** publish only a non-prerelease GitHub Release whose
   `v<version>` tag exactly matches `pyproject.toml` and `__version__`. The
   release workflow imports the wheel with runtime dependencies only, then runs
@@ -93,3 +101,4 @@ submit/poll). The retired horde `/api/v2` async queue is NOT used. Its PyPI pack
 
 - [src/grid_sdk/AGENTS.md](src/grid_sdk/AGENTS.md) — the SDK package: clients + raw-Grid access.
 - [tests/AGENTS.md](tests/AGENTS.md) — mocked Python SDK contract tests.
+- [qualification/AGENTS.md](qualification/AGENTS.md) - cross-repo video jobs qualification.

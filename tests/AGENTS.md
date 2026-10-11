@@ -9,12 +9,17 @@ Grid media helper.
 
 - `test_client.py` - Grid/OpenAI client defaults, aliases, and public surface.
 - `test_grid.py` - `/v1` image/video request and response behavior.
+- `test_video_jobs.py` - candidate async-job wire contract, source passthrough,
+  delegation, no POST retry, GET recovery, bounded polling and receipt identity.
 
 ## Local Contracts
 
 - Mock all HTTP. Never use production API keys or consume live credits.
 - Assert exact URL, headers, payload, sync behavior, async parity, and errors.
 - Keep public aliases/version/export behavior covered.
+- Preserve legacy custom-base construction; only accessing the candidate
+  helper requires its `/v1` base. Never replace source/receipt validation with
+  live production requests in this suite.
 
 ## Work Guidance
 

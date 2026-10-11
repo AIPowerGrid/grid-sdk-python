@@ -13,6 +13,8 @@ raw-Grid escape hatch (`grid.py`) for generation beyond the `/v1` surface.
   the `AIPG_API_KEY` env var, and `online_models()`.
 - **`grid.py`** — `GridRaw`/`AsyncGridRaw` (reached via `client.grid`) and `GridError`. POSTs
   synchronously to the `/v1` media endpoints with `httpx`.
+- **`video_jobs.py`** — separate lazy `video_jobs` namespace, public typed
+  receipts and sanitized `VideoJobError`; synchronous and asynchronous twins.
 
 ## Local Contracts
 
@@ -29,6 +31,20 @@ raw-Grid escape hatch (`grid.py`) for generation beyond the `/v1` surface.
 - `credits()` reads Core's canonical three-pocket account view; SDKs do not
   calculate allowances or maintain local free-use counters.
 - The sync and async classes are mirror twins — change both together.
+- Candidate `video_jobs.submit(body, idempotency_key=...)` requires an explicit
+  model, prompt, positive exact integer micro-USD ceiling and caller-persisted
+  UUIDv4 key. It snapshots the body, checks credential-free `/health` features,
+  then sends one POST to `/videos/jobs`. Core owns pricing/admission/holds.
+- `recover` requires exactly one canonical job UUID or header idempotency key.
+  Recovery/wait are GET-only, bypass capability preflight and never re-upload.
+  Wait bounds its deadline and checks stable job/model/request hash/hold/ceiling.
+  A closed job is not refund proof; completion metadata is not media QC.
+- New video HTTP paths refuse redirects, bound JSON replies to 64 KiB, and
+  sanitize transport/HTTP errors. Delegated user tokens travel only in headers.
+  Request bodies are bounded and money is at most `2**53 - 1` for JS parity.
+- `image`/`keyframes` are literal frame constraints, not character identity
+  references. Audio/video source admission remains gated by Core; no x402 rail
+  or private-appearance adapter is implemented by the SDK.
 
 ## Work Guidance
 

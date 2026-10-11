@@ -26,6 +26,8 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
+from .video_jobs import AsyncVideoJobs, VideoJobs
+
 
 class GridError(RuntimeError):
     pass
@@ -112,6 +114,12 @@ class GridRaw:
         self._headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         self._base = _v1_base(base_url)
         self._timeout = timeout
+        self._api_key = api_key
+
+    @property
+    def video_jobs(self) -> VideoJobs:
+        """Separate candidate async contract; existing generation is unchanged."""
+        return VideoJobs(self._api_key, self._base)
 
     def _post(self, path: str, body: Dict[str, Any], timeout: float) -> Dict[str, Any]:
         with httpx.Client(timeout=timeout) as c:
@@ -193,6 +201,11 @@ class AsyncGridRaw:
         self._headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         self._base = _v1_base(base_url)
         self._timeout = timeout
+        self._api_key = api_key
+
+    @property
+    def video_jobs(self) -> AsyncVideoJobs:
+        return AsyncVideoJobs(self._api_key, self._base)
 
     async def _post(self, path: str, body: Dict[str, Any], timeout: float) -> Dict[str, Any]:
         async with httpx.AsyncClient(timeout=timeout) as c:
