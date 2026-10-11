@@ -183,8 +183,9 @@ def test_lost_reply_recovers_by_header_without_post_retry_or_health() -> None:
 @respx.mock
 @pytest.mark.asyncio
 @pytest.mark.parametrize("motion", [False, True])
+@pytest.mark.parametrize("attention", [None, 0.25])
 async def test_appearance_sources_survive_lost_reply_without_becoming_opening_pins(
-    motion: bool,
+    motion: bool, attention: float | None,
 ) -> None:
     health()
     model = "LTX-2.5 Dev BF16 Ingredients"
@@ -197,6 +198,8 @@ async def test_appearance_sources_survive_lost_reply_without_becoming_opening_pi
         "reference_audio": "data:audio/wav;base64,fixture",
         "reference_strength": 1.0,
     }
+    if attention is not None:
+        body["reference_attention_strength"] = attention
     if motion:
         body.update(
             reference_video="data:video/mp4;base64,fixture",

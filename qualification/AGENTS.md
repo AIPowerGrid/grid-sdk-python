@@ -17,16 +17,19 @@ built JavaScript SDK. Not part of runtime packages or ordinary SDK unit tests.
 - Exercise generated/audio/video modes with/without lost accepted replies;
   require one job/hold/payout and one submission per SDK. Recovery after
   admission rollback must be GET-only.
-- Also exercise the separate Dev Ingredients audio/appearance profile using a
-  real decoded PNG/WAV and an explicit isolated fixture tariff. Require the
+- Also exercise separate Dev Ingredients audio/appearance and motion/appearance
+  profiles, with reference attention omitted or explicit, using decoded
+  synthetic PNG/WAV/MP4 and an explicit isolated fixture tariff. Require the
   appearance worker feature, no opening pin, distinct private bindings and
   100,834-micro hold/charge. This does not price/admit the real candidate or
   qualify native GPU/R2/identity, even when the SQL proof runs on Postgres.
 - Real JavaScript transport cases additionally serve the isolated router on an
   ephemeral IPv4 loopback socket and run the peer's `core-http.mjs`, without
   mocking fetch. Supply fixture credentials over stdin only and clear the child
-  environment except PATH. Require unauthenticated health, one actual POST,
-  owner/key GET recovery, and real 401/403/404 isolation after settlement and
+  environment except PATH. These include both appearance modes/attention
+  choices, not just the ordinary source protocol. Require unauthenticated
+  health, one actual POST, the committed guide/control, owner/key GET recovery,
+  and real 401/403/404 isolation after settlement and
   admission rollback. Stop the child and local server in every terminal path.
   Lost replies here are a post-commit 503, not a physical network outage.
 - Use real source decoders for synthetic MP4/WAV. Missing FFmpeg skips are not

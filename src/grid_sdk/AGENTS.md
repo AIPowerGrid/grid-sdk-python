@@ -48,6 +48,9 @@ raw-Grid escape hatch (`grid.py`) for generation beyond the `/v1` surface.
   mixing these references with `image`/`keyframes` before HTTP. Core owns
   decoding, fixed profile/knob validation, worker capabilities and admission;
   source-health flags alone do not qualify appearance or enable its price.
+  Optional `reference_attention_strength` passes through unchanged, separately
+  from denoising and motion attention. Do not insert a default or recompute
+  graph/intent authority in the client; Core owns those contracts.
   No x402 rail or adapter execution is implemented by the SDK.
 
 ## Work Guidance

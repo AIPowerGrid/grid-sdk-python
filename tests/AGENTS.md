@@ -13,6 +13,8 @@ Grid media helper.
   delegation, no POST retry, GET recovery, bounded polling and receipt identity.
   Separate appearance tests preserve PNG/audio/optional video and strengths
   through lost-reply recovery, rejecting opening-pin conflicts before HTTP.
+  Cover omitted/explicit reference attention in both audio and motion modes;
+  the retained request must be unchanged after an uncertain accepted reply.
   Inline fixture strings are transport-only, not decoded media/native proof.
 
 ## Local Contracts

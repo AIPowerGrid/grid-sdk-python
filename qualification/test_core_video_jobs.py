@@ -8,6 +8,7 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 import socket
 import subprocess
 import sys
@@ -44,25 +45,127 @@ module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module
 spec.loader.exec_module(module)
 
+MODES = [
+    "generated",
+    "audio",
+    "video",
+    "appearance-audio",
+    "appearance-video",
+    "appearance-audio-attention",
+    "appearance-video-attention",
+]
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("mode", ["generated", "audio", "video", "appearance-audio"])
-@pytest.mark.parametrize("lost_reply", [False, True])
-async def test_sdk_core_auth_hold_recovery_and_js_parity(
-    api, mp4, monkeypatch, mode, lost_reply
-):
-    client, aid, credential, settings, quota, _available = api
-    appearance = mode == "appearance-audio"
-    model = "LTX-2.5 Dev BF16 Ingredients" if appearance else MODEL
+
+@pytest.fixture
+def video_body(mode, api, mp4, tmp_path, monkeypatch):
+    appearance = mode.startswith("appearance-")
     frames = 121 if appearance else 9
+    model = "LTX-2.5 Dev BF16 Ingredients" if appearance else MODEL
     if appearance:
-        _available.return_value = [model]
-        # Isolated fixture tariff only: the real Ingredients recipe is dark/unpriced.
+        api[-1].return_value = [model]
+        # Fixture tariff only; the actual Ingredients recipe stays dark/unpriced.
         monkeypatch.setitem(
             pricing.PRICING,
             model.lower(),
             pricing.ModelPrice(0, 0, video_per_second=0.02),
         )
+    body = {
+        "model": model,
+        "prompt": "A synthetic red ball rolls",
+        "frames": frames,
+        "fps": 24,
+        "size": "768x448" if appearance else "256x256",
+        "seed": 42,
+        "max_cost_micro_usd": 150_000 if appearance else 100_000,
+    }
+    if mode != "generated":
+        body["reference_audio"] = base64.b64encode(wav(frames)).decode("ascii")
+    if appearance:
+        image = io.BytesIO()
+        Image.new("RGB", (768, 448), "red").save(image, "PNG")
+        body["reference_image"] = base64.b64encode(image.getvalue()).decode("ascii")
+        body.update(steps=40, cfg_scale=2.0, reference_strength=1.0)
+        if mode.endswith("-attention"):
+            body["reference_attention_strength"] = 0.25
+    if "video" in mode:
+        if appearance:
+            decoder = shutil.which("ffmpeg")
+            if not decoder or not shutil.which("ffprobe"):
+                pytest.skip("independent FFmpeg source-decoder gate unavailable")
+            path = tmp_path / "appearance-motion.mp4"
+            subprocess.run(
+                [
+                    decoder,
+                    "-v",
+                    "error",
+                    "-nostdin",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    "testsrc2=size=768x448:rate=24",
+                    "-frames:v",
+                    str(frames),
+                    "-an",
+                    "-c:v",
+                    "libx264",
+                    "-threads",
+                    "1",
+                    "-pix_fmt",
+                    "yuv420p",
+                    str(path),
+                ],
+                capture_output=True,
+                timeout=15,
+                check=True,
+                env={"PATH": os.environ["PATH"]},
+            )
+            mp4 = path.read_bytes()
+        body["reference_video"] = base64.b64encode(mp4).decode("ascii")
+    return body
+
+
+def assert_source_contract(row, body):
+    appearance = "reference_image" in body
+    mode = (
+        "video"
+        if "reference_video" in body
+        else "audio"
+        if "reference_audio" in body
+        else "generated"
+    )
+    inputs = row["payload"]["recipe_inputs"]
+    assert inputs.get("source_mode", "generated") == mode
+    if appearance:
+        assert row["payload"]["appearance_profile"] == "ingredients-dev-v1"
+        assert "source_image_url" not in row["payload"]
+        roles = ["reference_image", "reference_audio"]
+        if mode == "video":
+            roles.append("reference_video")
+        assert [item["role"] for item in row["payload"]["source_media"]] == roles
+        assert inputs.get("reference_attention_strength") == body.get(
+            "reference_attention_strength"
+        )
+        guide = row["payload"]["recipe_spec"]["reference_guide"]
+        if "reference_attention_strength" in body:
+            assert guide["class_type"] == "LTXAddVideoICLoRAGuideAdvanced"
+            assert (
+                guide["inputs"]["attention_strength"]
+                == body["reference_attention_strength"]
+            )
+        else:
+            assert guide["class_type"] == "LTXAddVideoICLoRAGuide"
+            assert "attention_strength" not in guide["inputs"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mode", MODES)
+@pytest.mark.parametrize("lost_reply", [False, True])
+async def test_sdk_core_auth_hold_recovery_and_js_parity(
+    api, video_body, monkeypatch, mode, lost_reply
+):
+    client, aid, credential, settings, quota, _available = api
+    body = video_body
+    model, frames = body["model"], body["frames"]
     app = client._transport.app
     features = [module.FEATURE, module.SOURCE_FEATURE]
 
@@ -92,24 +195,6 @@ async def test_sdk_core_auth_hold_recovery_and_js_parity(
         ),
     )
     key = str(uuid4())
-    body = {
-        "model": model,
-        "prompt": "A synthetic red ball rolls",
-        "frames": frames,
-        "fps": 24,
-        "size": "768x448" if appearance else "256x256",
-        "seed": 42,
-        "max_cost_micro_usd": 150_000 if appearance else 100_000,
-    }
-    if mode != "generated":
-        body["reference_audio"] = base64.b64encode(wav(frames)).decode("ascii")
-    if appearance:
-        image = io.BytesIO()
-        Image.new("RGB", (768, 448), "red").save(image, "PNG")
-        body["reference_image"] = base64.b64encode(image.getvalue()).decode("ascii")
-        body.update(steps=40, cfg_scale=2.0, reference_strength=1.0)
-    if mode == "video":
-        body["reference_video"] = base64.b64encode(mp4).decode("ascii")
     if lost_reply:
         reserve = media_jobs.reserve
 
@@ -130,16 +215,8 @@ async def test_sdk_core_auth_hold_recovery_and_js_parity(
     assert await counts() == (1, 1, 0)
     quota.assert_awaited_once()
     row = await stored(pending["job_id"])
-    assert row["payload"]["recipe_inputs"].get("source_mode", "generated") == (
-        "audio" if appearance else mode
-    )
-    if appearance:
-        assert row["payload"]["appearance_profile"] == "ingredients-dev-v1"
-        assert "source_image_url" not in row["payload"]
-        assert [item["role"] for item in row["payload"]["source_media"]] == [
-            "reference_image",
-            "reference_audio",
-        ]
+    assert_source_contract(row, body)
+    if "reference_image" in body:
         assert pending["reserved_micro"] == 100_834
     assert pending["request_hash"] == video_jobs.request_hash(
         video_jobs.AsyncVideoRequest.model_validate(body)
@@ -273,12 +350,14 @@ async def child_record(process: asyncio.subprocess.Process) -> dict[str, Any]:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("mode", ["generated", "audio", "video"])
+@pytest.mark.parametrize("mode", MODES)
 @pytest.mark.parametrize("lost_reply", [False, True])
 async def test_js_sdk_real_http_admission_and_recovery(
-    api, mp4, monkeypatch, mode, lost_reply
+    api, video_body, monkeypatch, mode, lost_reply
 ):
     client, aid, credential, settings, quota, _available = api
+    body = video_body
+    model, frames = body["model"], body["frames"]
     app = client._transport.app
     features = [module.FEATURE, module.SOURCE_FEATURE]
     trace, submissions = [], []
@@ -316,19 +395,6 @@ async def test_js_sdk_real_http_admission_and_recovery(
             + "?X-Amz-Signature=synthetic"
         ),
     )
-    body = {
-        "model": MODEL,
-        "prompt": "A synthetic red ball rolls",
-        "frames": 9,
-        "fps": 24,
-        "size": "256x256",
-        "seed": 42,
-        "max_cost_micro_usd": 100_000,
-    }
-    if mode != "generated":
-        body["reference_audio"] = base64.b64encode(wav(9)).decode("ascii")
-    if mode == "video":
-        body["reference_video"] = base64.b64encode(mp4).decode("ascii")
     if lost_reply:
         reserve = media_jobs.reserve
 
@@ -377,9 +443,9 @@ async def test_js_sdk_real_http_admission_and_recovery(
             quota.assert_awaited_once()
             accepted_requests = len(trace)
             row = await stored(pending["job_id"])
-            assert (
-                row["payload"]["recipe_inputs"].get("source_mode", "generated") == mode
-            )
+            assert_source_contract(row, body)
+            if "reference_image" in body:
+                assert pending["reserved_micro"] == 100_834
             worker, token = uuid4(), str(uuid4())
             assert (
                 await media_jobs.claim_execution(
@@ -387,7 +453,7 @@ async def test_js_sdk_real_http_admission_and_recovery(
                     payload=row["payload"],
                     route_models=row["route_models"],
                     preferred_worker="",
-                    selected_model=MODEL,
+                    selected_model=model,
                     worker_id=worker,
                     job_type="video",
                     execution_token=token,
@@ -395,7 +461,7 @@ async def test_js_sdk_real_http_admission_and_recovery(
                 == "claimed"
             )
             result = {
-                "model": MODEL,
+                "model": model,
                 "worker": "synthetic-worker",
                 "gen_time": 1.0,
                 "recipe_root": row["payload"]["recipe_root"],
@@ -414,10 +480,10 @@ async def test_js_sdk_real_http_admission_and_recovery(
                         "job_id": row["job_id"],
                         "worker_id": str(worker),
                         "wallet": "",
-                        "model": MODEL,
+                        "model": model,
                         "job_type": "video",
                         "den": 1.0,
-                        "output_units": 9,
+                        "output_units": frames,
                         "prompt_hash": "b" * 64,
                         "result_hash": "c" * 64,
                     },
