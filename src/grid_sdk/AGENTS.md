@@ -15,6 +15,8 @@ raw-Grid escape hatch (`grid.py`) for generation beyond the `/v1` surface.
   synchronously to the `/v1` media endpoints with `httpx`.
 - **`video_jobs.py`** — separate lazy `video_jobs` namespace, public typed
   receipts and sanitized `VideoJobError`; synchronous and asynchronous twins.
+- `video_payments.py` - dependency-free quote-policy checks, unsigned EIP-712
+  preparation and explicit sync/async signer callbacks. No HTTP or sender.
 
 ## Local Contracts
 
@@ -51,7 +53,17 @@ raw-Grid escape hatch (`grid.py`) for generation beyond the `/v1` surface.
   Optional `reference_attention_strength` passes through unchanged, separately
   from denoising and motion attention. Do not insert a default or recompute
   graph/intent authority in the client; Core owns those contracts.
-  No x402 rail or adapter execution is implemented by the SDK.
+  No x402 collection or video execution is implemented by the SDK.
+- Payment preparation requires a trusted Core binding-v2 quote and independent
+  expected model/intent hash/recipient/network/ceiling. Check canonical USDC
+  domains, one committed nonce, exact integers and the five-minute window.
+  Do not copy the response hash as independent intent verification or claim
+  the hidden plan was proved. Client clocks are not chain/funding authority.
+- Preview `payment_enabled:false` blocks callbacks. Enabled sync/async callbacks
+  receive fresh JSON-ready signing data; recheck expiry after wallet work,
+  sanitize failures and propagate cancellation. Byte format is not ECDSA or
+  live account verification. Signed payloads are private capabilities omitted
+  from repr, explicitly exported only. No auto-sign, HTTP, retries or raw keys.
 
 ## Work Guidance
 

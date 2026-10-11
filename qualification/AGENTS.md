@@ -40,3 +40,15 @@ built JavaScript SDK. Not part of runtime packages or ordinary SDK unit tests.
 
 Run `pytest qualification/test_core_video_jobs.py` with those dependencies and
 paths. These checks do not qualify GPU output, funded R2 lifecycle or production.
+
+`test_core_video_payments.py` uses real scoped quote HTTP/SQL, decoded
+generated/audio/video fixtures and the standalone MIT payment module. Set
+`AIPG_JS_VIDEO_PAYMENTS_QUALIFICATION` to the built peer's
+`qualification/video-payments.mjs`; optionally choose its Node executable with
+`AIPG_VIDEO_QUALIFICATION_NODE`. Missing peer configuration fails. Both clients
+must block signing the actual preview quote; only a local future-enabled copy
+exercises new unfunded signatures and Core's actual verifier. Private two-phase
+IPC never carries keys/credentials; synthetic signatures are transient private
+data, not logged evidence. Terminate children on every path and require
+unchanged balance plus zero holds/jobs/ledgers. This is protocol/crypto proof,
+not wallet UI, live contract/facilitator, receipts, replay exclusion or funding.

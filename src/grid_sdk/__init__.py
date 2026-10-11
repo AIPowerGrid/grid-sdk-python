@@ -24,10 +24,40 @@ with the `openai` package, you can do here — same `.chat`, `.images`,
 """
 
 from .client import AIPG, AsyncAIPG, AsyncGrid, Grid, DEFAULT_BASE_URL
-from .video_jobs import AsyncVideoJobs, VideoJob, VideoJobError, VideoJobs, VideoMedia, VideoResult
+from .video_jobs import (
+    AsyncVideoJobs,
+    VideoJob,
+    VideoJobError,
+    VideoJobs,
+    VideoMedia,
+    VideoResult,
+)
+from .video_payments import (
+    SignedVideoAuthorization,
+    VideoAuthorizationRequest,
+    VideoPaymentError,
+    async_sign_video_authorization,
+    prepare_video_authorization,
+    sign_video_authorization,
+)
 
 __all__ = [
-    "Grid", "AsyncGrid", "AIPG", "AsyncAIPG", "DEFAULT_BASE_URL",
-    "VideoJobs", "AsyncVideoJobs", "VideoJob", "VideoJobError", "VideoMedia", "VideoResult",
+    "Grid",
+    "AsyncGrid",
+    "AIPG",
+    "AsyncAIPG",
+    "DEFAULT_BASE_URL",
+    "VideoJobs",
+    "AsyncVideoJobs",
+    "VideoJob",
+    "VideoJobError",
+    "VideoMedia",
+    "VideoResult",
+    "VideoAuthorizationRequest",
+    "SignedVideoAuthorization",
+    "VideoPaymentError",
+    "prepare_video_authorization",
+    "sign_video_authorization",
+    "async_sign_video_authorization",
 ]
-__version__ = "0.2.0a1"
+__version__ = "0.2.0a2"

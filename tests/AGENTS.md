@@ -16,6 +16,9 @@ Grid media helper.
   Cover omitted/explicit reference attention in both audio and motion modes;
   the retained request must be unchanged after an uncertain accepted reply.
   Inline fixture strings are transport-only, not decoded media/native proof.
+- `test_video_payments.py` - quote-policy, immutable views, disabled-before-
+  signer, expiry/failure/cancellation and hidden-signature controls. Mock
+  callbacks do not prove ECDSA, wallet UI, funds or HTTP payment.
 
 ## Local Contracts
 

@@ -76,11 +76,18 @@ does not change those existing synchronous methods. The retired horde `/api/v2` 
 - **Public API is `__init__.__all__`:** `Grid`, `AsyncGrid`, `AIPG`, `AsyncAIPG`,
   `DEFAULT_BASE_URL`, `VideoJobs`, `AsyncVideoJobs`, `VideoJob`, `VideoJobError`,
   `VideoMedia`, `VideoResult`. `AIPG`/`AsyncAIPG` are aliases of `Grid`/`AsyncGrid` and must stay so.
+  Candidate payment exports add `VideoAuthorizationRequest`,
+  `SignedVideoAuthorization`, `VideoPaymentError`, `prepare_video_authorization`,
+  `sign_video_authorization` and `async_sign_video_authorization`.
 - **Keep `__version__` (in `__init__.py`) in sync with `version` in `pyproject.toml`.**
 - Package metadata, source SPDX headers, and `LICENSE` all use MIT.
 - Candidate video helpers are independently implemented MIT clients for the
   wire protocol, not copies of AGPL Core/Director implementation. They never
   retry POST, download media, hold funds, or claim a closed job was refunded.
+  Payment helpers independently implement the public quote/EIP-712 wire contract
+  without adding dependencies. They perform no HTTP and never take keys or
+  send; actual preview quotes refuse signer callbacks. A returned signature
+  is not funding, account/contract verification or a payment rail.
 - **Release identity:** publish only a non-prerelease GitHub Release whose
   `v<version>` tag exactly matches `pyproject.toml` and `__version__`. The
   release workflow imports the wheel with runtime dependencies only, then runs

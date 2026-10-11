@@ -109,7 +109,7 @@ do not use the separate video-jobs lifecycle below.
 
 ## Candidate Durable Video Jobs
 
-This branch's `0.2.0a1` adds `client.grid.video_jobs` (and its `AsyncGrid`
+This branch's `0.2.0a2` adds `client.grid.video_jobs` (and its `AsyncGrid`
 twin). It requires the candidate Core `/v1/videos/jobs` contract, which is
 default-off and **not a public production feature yet**. Installing this SDK
 does not enable admission, qualify a worker or authorize spending.
@@ -183,6 +183,36 @@ admitted, priced or visually qualified. Private native test-credit lifecycle
 evidence exists; public/purchased-credit acceptance, measured quality and
 model-use clearance remain gates. x402 video payments are a proposal, not an
 implemented SDK payment rail.
+
+## Candidate Video Wallet Preparation
+
+`prepare_video_authorization` checks a trusted, authenticated Core quote against
+your independently retained model, normalized intent hash, reviewed recipient,
+network and exact spending ceiling. It returns unsigned EIP-712 data without
+keys, HTTP or dependencies.
+
+```python
+from grid_sdk import prepare_video_authorization
+
+request = prepare_video_authorization(
+    quote,
+    payer=wallet_address,
+    expected_model=model,
+    expected_request_hash=saved_intent_hash,
+    expected_recipient=reviewed_recipient,
+    network="eip155:84532",
+    max_cost_micro_usd=100_000,
+)
+```
+
+Quotes are private/default-off and return `payment_enabled: false`.
+`sign_video_authorization` and its async twin block those before invoking a
+wallet callback. Do not flip that field yourself or prompt a real wallet for
+this candidate. No payment endpoint or sender exists. Future enabled callbacks
+sign only, with expiry checked afterwards; Core must verify signatures, live
+accounts/tokens, nonce claims and actual funds. Never log or persist
+`SignedVideoAuthorization.payload` as ordinary evidence. A signed authorization
+is not a completed payment or generation.
 
 ## It's just OpenAI underneath
 
