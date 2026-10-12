@@ -19,6 +19,8 @@ Grid media helper.
 - `test_video_payments.py` - quote-policy, immutable views, disabled-before-
   signer, expiry/failure/cancellation and hidden-signature controls. Mock
   callbacks do not prove ECDSA, wallet UI, funds or HTTP payment.
+  Require binding-v3 upfront/EIP-3009 and explicit consent before sync/async
+  callbacks; default/false, coerced policy and legacy quotes reject signing.
 
 ## Local Contracts
 

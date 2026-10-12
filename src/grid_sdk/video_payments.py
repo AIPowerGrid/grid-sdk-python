@@ -88,6 +88,7 @@ class VideoAuthorizationRequest:
     expires: int
     payment_enabled: bool
     _encoded: str = field(repr=False)
+    accepts_upfront_payment: bool = False
 
     @property
     def authorization(self) -> Dict[str, str]:
@@ -100,6 +101,8 @@ class VideoAuthorizationRequest:
     def _signable(self) -> None:
         if not self.payment_enabled:
             raise VideoPaymentError("payment_disabled")
+        if self.accepts_upfront_payment is not True:
+            raise VideoPaymentError("upfront_payment_not_accepted")
         if int(time.time()) >= self.expires:
             raise VideoPaymentError("expired_quote")
 
@@ -126,6 +129,7 @@ def prepare_video_authorization(
     expected_recipient: str,
     network: str,
     max_cost_micro_usd: int,
+    accept_upfront_payment: bool = False,
 ) -> VideoAuthorizationRequest:
     """Check a trusted Core quote against independently retained intent/policy.
 
@@ -140,6 +144,8 @@ def prepare_video_authorization(
             raise ValueError
         value = json.loads(encoded)
         _integer(max_cost_micro_usd)
+        if type(accept_upfront_payment) is not bool:
+            raise ValueError
         intent = _digest(expected_request_hash)
         payer, recipient = _address(payer), _address(expected_recipient)
         chain, name, asset = _DOMAINS[network]
@@ -147,7 +153,7 @@ def prepare_video_authorization(
         created, expires = _integer(value["created"]), _integer(value["expires"])
         if (
             value["schema"] != "aipg.video-quote.v1"
-            or value["binding_schema"] != "aipg.video-quote-binding.v2"
+            or value["binding_schema"] != "aipg.video-quote-binding.v3"
             or value["state"] != "quoted"
             or type(value["payment_enabled"]) is not bool
             or not isinstance(expected_model, str)
@@ -181,6 +187,8 @@ def prepare_video_authorization(
         }
         if (
             payment["scheme"] != "exact"
+            or payment["payment_flow"] != "upfront"
+            or payment["asset_transfer_method"] != "eip3009"
             or payment["network"] != network
             or payment["asset"] != asset
             or _address(payment["pay_to"]) != recipient
@@ -210,7 +218,13 @@ def prepare_video_authorization(
             {"authorization": authorization, "typed_data": typed}, separators=(",", ":")
         )
         return VideoAuthorizationRequest(
-            quote_id, job_id, intent, expires, value["payment_enabled"], frozen
+            quote_id,
+            job_id,
+            intent,
+            expires,
+            value["payment_enabled"],
+            frozen,
+            accept_upfront_payment,
         )
     except (
         ValueError,

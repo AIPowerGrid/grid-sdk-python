@@ -37,7 +37,7 @@ def fixture(monkeypatch):
     asset = "0x036cbd53842c5426634e7929541ec2318f3dcf7e"
     quote = {
         "schema": "aipg.video-quote.v1",
-        "binding_schema": "aipg.video-quote-binding.v2",
+        "binding_schema": "aipg.video-quote-binding.v3",
         "quote_id": "11111111-1111-4111-8111-111111111111",
         "job_id": "22222222-2222-4222-8222-222222222222",
         "state": "quoted",
@@ -52,6 +52,8 @@ def fixture(monkeypatch):
         "max_cost_micro_usd": 100_000,
         "payment": {
             "scheme": "exact",
+            "payment_flow": "upfront",
+            "asset_transfer_method": "eip3009",
             "network": "eip155:84532",
             "asset": asset,
             "pay_to": "0x" + "1" * 40,
@@ -73,6 +75,7 @@ def fixture(monkeypatch):
         "expected_recipient": "0x" + "1" * 40,
         "network": "eip155:84532",
         "max_cost_micro_usd": 100_000,
+        "accept_upfront_payment": True,
     }
     return quote, policy
 
@@ -176,6 +179,74 @@ def test_sign_callback_is_explicit_and_spending_capability_is_not_in_repr(fixtur
     assert SIG not in repr(signed)
     signed.payload["signature"] = "changed"
     assert signed.payload["signature"] == SIG
+
+
+@pytest.mark.parametrize("accept", [False, None])
+def test_enabled_quote_still_requires_explicit_upfront_acceptance(fixture, accept):
+    quote, policy = fixture
+    quote["payment_enabled"] = True
+    if accept is None:
+        policy.pop("accept_upfront_payment")
+    else:
+        policy["accept_upfront_payment"] = accept
+    request = prepare_video_authorization(quote, **policy)
+    signer = Mock(return_value=SIG)
+    with pytest.raises(VideoPaymentError, match="upfront_payment_not_accepted"):
+        sign_video_authorization(request, signer)
+    signer.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "term,value",
+    [
+        ("payment_flow", "authorization"),
+        ("payment_flow", "escrow"),
+        ("payment_flow", None),
+        ("asset_transfer_method", "permit2"),
+        ("asset_transfer_method", None),
+    ],
+)
+def test_wrong_or_implicit_upfront_terms_are_rejected(fixture, term, value):
+    quote, policy = fixture
+    if value is None:
+        quote["payment"].pop(term)
+    else:
+        quote["payment"][term] = value
+    with pytest.raises(VideoPaymentError):
+        prepare_video_authorization(quote, **policy)
+
+
+@pytest.mark.parametrize("accept", ["true", 1, None])
+def test_upfront_policy_cannot_be_coerced(fixture, accept):
+    quote, policy = fixture
+    policy["accept_upfront_payment"] = accept
+    with pytest.raises(VideoPaymentError):
+        prepare_video_authorization(quote, **policy)
+
+
+def test_legacy_v2_quote_cannot_gain_upfront_signing_terms(fixture):
+    quote, policy = fixture
+    quote["binding_schema"] = "aipg.video-quote-binding.v2"
+    with pytest.raises(VideoPaymentError):
+        prepare_video_authorization(quote, **policy)
+
+
+@pytest.mark.asyncio
+async def test_async_callback_requires_upfront_consent_before_invocation(fixture):
+    quote, policy = fixture
+    quote["payment_enabled"] = True
+    policy.pop("accept_upfront_payment")
+    called = []
+
+    async def signer(data):
+        called.append(data)
+        return SIG
+
+    with pytest.raises(VideoPaymentError, match="upfront_payment_not_accepted"):
+        await async_sign_video_authorization(
+            prepare_video_authorization(quote, **policy), signer
+        )
+    assert not called
 
 
 def test_expiry_after_wallet_and_signer_failure_are_sanitized(fixture, monkeypatch):

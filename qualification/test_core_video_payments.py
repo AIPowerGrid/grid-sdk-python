@@ -13,7 +13,6 @@ from uuid import uuid4
 import pytest
 from eth_account import Account
 from eth_account.messages import encode_typed_data
-
 from grid_api.routers.tests import test_video_quotes as router_tests
 from grid_api.services import credits, video_eip3009, video_quotes
 from grid_api.services.tests.test_media_job_journal import OPENING, counts
@@ -60,19 +59,33 @@ async def test_actual_quote_and_both_sdk_wallet_callbacks_match_core(
         "expected_recipient": quote["payment"]["pay_to"],
         "network": quote["payment"]["network"],
         "max_cost_micro_usd": 100_000,
+        "accept_upfront_payment": True,
     }
     preview = sdk.prepare_video_authorization(quote, **policy)
     called = []
     with pytest.raises(sdk.VideoPaymentError, match="payment_disabled"):
         sdk.sign_video_authorization(preview, lambda data: called.append(data))
     assert not called
-    unsigned = sdk.prepare_video_authorization(
-        {**quote, "payment_enabled": True}, **policy
-    )
+    enabled_quote = {**quote, "payment_enabled": True}
+    no_consent = {
+        key: value for key, value in policy.items() if key != "accept_upfront_payment"
+    }
+    for consent_policy in (no_consent, {**no_consent, "accept_upfront_payment": False}):
+        unsigned_without_consent = sdk.prepare_video_authorization(
+            enabled_quote, **consent_policy
+        )
+        with pytest.raises(sdk.VideoPaymentError, match="upfront_payment_not_accepted"):
+            sdk.sign_video_authorization(
+                unsigned_without_consent, lambda data: called.append(data)
+            )
+    assert not called
+    unsigned = sdk.prepare_video_authorization(enabled_quote, **policy)
     signed = sdk.sign_video_authorization(
         unsigned,
-        lambda data: "0x"
-        + wallet.sign_message(encode_typed_data(full_message=data)).signature.hex(),
+        lambda data: (
+            "0x"
+            + wallet.sign_message(encode_typed_data(full_message=data)).signature.hex()
+        ),
     )
     result = video_eip3009.verify(row, signed.payload, expected_payer=wallet.address)
     assert result.job_id == quote["job_id"] and result.amount_micro == 7500
@@ -98,6 +111,7 @@ async def test_actual_quote_and_both_sdk_wallet_callbacks_match_core(
             "expectedRecipient": policy["expected_recipient"],
             "network": policy["network"],
             "maxCostMicroUsd": policy["max_cost_micro_usd"],
+            "acceptUpfrontPayment": policy["accept_upfront_payment"],
         }
         child.stdin.write(
             (json.dumps({"quote": quote, "policy": js_policy}) + "\n").encode()
@@ -109,6 +123,7 @@ async def test_actual_quote_and_both_sdk_wallet_callbacks_match_core(
         assert (
             data["phase"] == "unsigned"
             and data["previewBlocked"]
+            and data["consentBlocked"]
             and not data["called"]
         )
         assert (

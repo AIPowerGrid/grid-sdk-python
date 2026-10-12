@@ -50,5 +50,8 @@ must block signing the actual preview quote; only a local future-enabled copy
 exercises new unfunded signatures and Core's actual verifier. Private two-phase
 IPC never carries keys/credentials; synthetic signatures are transient private
 data, not logged evidence. Terminate children on every path and require
-unchanged balance plus zero holds/jobs/ledgers. This is protocol/crypto proof,
-not wallet UI, live contract/facilitator, receipts, replay exclusion or funding.
+unchanged balance plus zero holds/jobs/ledgers.
+Both SDKs must refuse callbacks on an enabled test copy when upfront consent is
+omitted or false, then sign only with explicit acceptance of binding-v3 terms.
+This is protocol/crypto proof, not wallet UI, live contract/facilitator, receipts,
+replay exclusion or funding.

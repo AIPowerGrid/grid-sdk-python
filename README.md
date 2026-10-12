@@ -109,7 +109,7 @@ do not use the separate video-jobs lifecycle below.
 
 ## Candidate Durable Video Jobs
 
-This branch's `0.2.0a2` adds `client.grid.video_jobs` (and its `AsyncGrid`
+This branch's `0.2.0a3` adds `client.grid.video_jobs` (and its `AsyncGrid`
 twin). It requires the candidate Core `/v1/videos/jobs` contract, which is
 default-off and **not a public production feature yet**. Installing this SDK
 does not enable admission, qualify a worker or authorize spending.
@@ -190,6 +190,9 @@ implemented SDK payment rail.
 your independently retained model, normalized intent hash, reviewed recipient,
 network and exact spending ceiling. It returns unsigned EIP-712 data without
 keys, HTTP or dependencies.
+New binding-v3 quotes must disclose upfront settlement and EIP-3009. Earlier
+quotes are historical-only, not fresh wallet requests. Upfront means payment
+before rendering; explicitly accept it only after reviewing that policy.
 
 ```python
 from grid_sdk import prepare_video_authorization
@@ -202,13 +205,16 @@ request = prepare_video_authorization(
     expected_recipient=reviewed_recipient,
     network="eip155:84532",
     max_cost_micro_usd=100_000,
+    accept_upfront_payment=True,  # Explicitly accept payment before rendering.
 )
 ```
 
 Quotes are private/default-off and return `payment_enabled: false`.
 `sign_video_authorization` and its async twin block those before invoking a
 wallet callback. Do not flip that field yourself or prompt a real wallet for
-this candidate. No payment endpoint or sender exists. Future enabled callbacks
+this candidate. Enabled quotes still refuse signing unless upfront acceptance
+was explicitly true; omitted/false policies never invoke the wallet. No payment
+endpoint or sender exists. Future enabled callbacks
 sign only, with expiry checked afterwards; Core must verify signatures, live
 accounts/tokens, nonce claims and actual funds. Never log or persist
 `SignedVideoAuthorization.payload` as ordinary evidence. A signed authorization

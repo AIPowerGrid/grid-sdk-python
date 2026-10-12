@@ -88,6 +88,9 @@ does not change those existing synchronous methods. The retired horde `/api/v2` 
   without adding dependencies. They perform no HTTP and never take keys or
   send; actual preview quotes refuse signer callbacks. A returned signature
   is not funding, account/contract verification or a payment rail.
+  Fresh signing requires binding-v3 upfront/EIP-3009 terms plus explicit
+  `accept_upfront_payment=True`; default/false refuses callbacks even when
+  enabled. Earlier quotes are historical-only. Keep this policy aligned with JS.
 - **Release identity:** publish only a non-prerelease GitHub Release whose
   `v<version>` tag exactly matches `pyproject.toml` and `__version__`. The
   release workflow imports the wheel with runtime dependencies only, then runs
