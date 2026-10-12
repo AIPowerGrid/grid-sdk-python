@@ -104,8 +104,121 @@ result = client.grid.generate({"prompt": "...", "models": [...], "params": {...}
 ```
 
 `client.grid` waits for the synchronous Grid response and returns the finished
-OpenAI-shaped result. Use `timeout` for long media jobs; there is no SDK
-submit/poll mode on this `/v1` client.
+OpenAI-shaped result. Use `timeout` for long media jobs. These existing calls
+do not use the separate video-jobs lifecycle below.
+
+## Candidate Durable Video Jobs
+
+This branch's `0.2.0a3` adds `client.grid.video_jobs` (and its `AsyncGrid`
+twin). It requires the candidate Core `/v1/videos/jobs` contract, which is
+default-off and **not a public production feature yet**. Installing this SDK
+does not enable admission, qualify a worker or authorize spending.
+
+```python
+from uuid import uuid4
+
+jobs = client.grid.video_jobs
+key = str(uuid4())
+body = {
+    "model": "LTX-2.5 Distilled BF16",
+    "prompt": "A person waves from inside a parked car",
+    "frames": 33,
+    "fps": 24,
+    "max_cost_micro_usd": 50_000,  # $0.05 ceiling, not a quote
+    # Audio-to-video: reference_audio="data:audio/wav;base64,..."
+    # Video-to-video: also reference_video="data:video/mp4;base64,..."
+    # Video reference requires an explicit size, e.g. size="768x512".
+}
+# Durably save key + immutable body in your application's private journal FIRST.
+# Do not generate a fresh key when recovering this operation.
+receipt = jobs.submit(body, idempotency_key=key)
+# Save the accepted receipt before waiting or downloading any result.
+terminal = jobs.wait(receipt, timeout=600)
+```
+
+`submit` checks `/health` contract features without credentials, then sends
+**one POST**. Core still owns worker availability, recipe/input validation,
+live pricing and the atomic credit hold. There is no model fallback, automatic
+POST retry, asset download or client-side billing counter. Costs are integer
+micro-USD, limited to `2**53 - 1` for exact parity with JavaScript.
+
+If the reply is lost, malformed, cancelled or fails after POST begins, preserve
+the saved key and use `jobs.recover(idempotency_key=key)`. Once you have a job
+ID, use `jobs.recover(job_id=receipt["job_id"])` or `jobs.wait(receipt)`.
+Recovery is **GET-only**, does not re-upload sources, and bypasses capability
+preflight so accepted jobs remain recoverable after new admission is disabled.
+404/409/5xx are surfaced; none triggers another submission. A `VideoJobError`
+reports sanitized `kind`, `http_status`, and `submission_uncertain`; HTTP errors
+after POST are conservatively uncertain, even if Core probably rejected them.
+Cancellation also requires recovery; it does not prove the job was cancelled.
+
+`wait` returns `completed` or `closed_without_result`, validating stable job,
+model, request hash, held amount and ceiling on every poll. The latter means
+no recoverable output, **not proof of a refund**. Timeout does not release a
+hold or start another render. The returned hashes are metadata commitments;
+the SDK does not download, hash or quality-check the output.
+
+For delegated service calls, pass `user_token=...` to submit/recover/wait;
+it travels only in `X-Grid-User-Token`, never a URL. Keep service credentials
+server-side. The SDK refuses redirects on the new authenticated paths.
+
+Source inputs must be inline, server-validated WAV/MP4, not arbitrary remote
+URLs. Audio uses stereo PCM16 WAV at 48 kHz, exactly `frames * 2000` samples
+at 24 fps. Video uses frame-matched 24-fps H.264 MP4 plus a separate WAV and
+explicit output size. Current LTX frame/recipe gates remain authoritative.
+An `image` or timed `keyframes` pin constrains actual frames: **it is not an
+appearance-only identity reference**.
+
+The separate, unpriced **`LTX-2.5 Dev BF16 Ingredients`** candidate accepts
+`reference_image` as a 768x448 PNG, exact-duration `reference_audio`, and optional
+frame-matched `reference_video`, at 121 frames/24 fps, 40 steps and CFG 2.
+Use explicit `size="768x448"` and no `image`/`keyframes`. `reference_strength`
+defaults to 1; with video, `guide_strength` defaults to 0.5 and
+`motion_attention_strength` to 0.25. Optional `reference_attention_strength`
+is independently bounded to (0, 1]; omission preserves the original appearance
+guide, rather than silently choosing a new default. Core validates these controls and decodes
+every source. The helper forwards them; it never executes an adapter or turns
+the PNG into frame zero. Source-health features do not mean this recipe is
+admitted, priced or visually qualified. Private native test-credit lifecycle
+evidence exists; public/purchased-credit acceptance, measured quality and
+model-use clearance remain gates. x402 video payments are a proposal, not an
+implemented SDK payment rail.
+
+## Candidate Video Wallet Preparation
+
+`prepare_video_authorization` checks a trusted, authenticated Core quote against
+your independently retained model, normalized intent hash, reviewed recipient,
+network and exact spending ceiling. It returns unsigned EIP-712 data without
+keys, HTTP or dependencies.
+New binding-v3 quotes must disclose upfront settlement and EIP-3009. Earlier
+quotes are historical-only, not fresh wallet requests. Upfront means payment
+before rendering; explicitly accept it only after reviewing that policy.
+
+```python
+from grid_sdk import prepare_video_authorization
+
+request = prepare_video_authorization(
+    quote,
+    payer=wallet_address,
+    expected_model=model,
+    expected_request_hash=saved_intent_hash,
+    expected_recipient=reviewed_recipient,
+    network="eip155:84532",
+    max_cost_micro_usd=100_000,
+    accept_upfront_payment=True,  # Explicitly accept payment before rendering.
+)
+```
+
+Quotes are private/default-off and return `payment_enabled: false`.
+`sign_video_authorization` and its async twin block those before invoking a
+wallet callback. Do not flip that field yourself or prompt a real wallet for
+this candidate. Enabled quotes still refuse signing unless upfront acceptance
+was explicitly true; omitted/false policies never invoke the wallet. No payment
+endpoint or sender exists. Future enabled callbacks
+sign only, with expiry checked afterwards; Core must verify signatures, live
+accounts/tokens, nonce claims and actual funds. Never log or persist
+`SignedVideoAuthorization.payload` as ordinary evidence. A signed authorization
+is not a completed payment or generation.
 
 ## It's just OpenAI underneath
 
@@ -113,6 +226,29 @@ submit/poll mode on this `/v1` client.
 tool calling, structured output, the full `.chat`/`.images`/`.models` surface —
 works here too. You can also point existing OpenAI code at the Grid by setting
 `base_url="https://api.aipowergrid.io/v1"` if you'd rather not switch packages.
+
+## Candidate Qualification
+
+Unit tests mock all HTTP (`pytest tests`). Optional cross-repo tests exercise
+Core's real scoped authentication and SQL holds, but synthetic storage/workers,
+including accepted-reply loss and recovery after admission rollback. Build the
+JS peer first, then run from this SDK checkout with Core's locked test Python:
+
+```bash
+PYTHONPATH=/absolute/path/to/candidate-core \
+AIPG_JS_VIDEO_QUALIFICATION=/absolute/path/to/js-peer/qualification/core-wire.mjs \
+/absolute/path/to/core-test-python -m pytest qualification/test_core_video_jobs.py
+```
+
+Use an isolated scratch `CREDITS_TEST_DB_URL` for PostgreSQL; otherwise its
+cases skip and only SQLite is proved. Source decoder skips are not successful
+qualification. This harness does not run GPUs, use R2 or spend live credits.
+The JavaScript transport cases use unmocked fetch against a temporary IPv4
+loopback Core server, with fixture credentials supplied on stdin and no Core
+lifespan/background tasks. They require one actual POST, GET-only request and
+terminal recovery, plus real 401/403/404 ownership/scope checks. Local socket
+permission is required. Reply loss is a post-commit 503, not a network-outage
+test; the synthetic completion does not qualify actual video output.
 
 ## Config
 
