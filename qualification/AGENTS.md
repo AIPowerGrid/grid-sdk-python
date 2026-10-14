@@ -23,6 +23,9 @@ built JavaScript SDK. Not part of runtime packages or ordinary SDK unit tests.
   appearance worker feature, no opening pin, distinct private bindings and
   100,834-micro hold/charge. This does not price/admit the real candidate or
   qualify native GPU/R2/identity, even when the SQL proof runs on Postgres.
+  Appearance fixtures explicitly configure their sole synthetic account in
+  an expiring private pilot; they must not weaken Core's BF16-only public gate.
+  Ordinary BF16 cases retain public-mode fixture admission.
 - Real JavaScript transport cases additionally serve the isolated router on an
   ephemeral IPv4 loopback socket and run the peer's `core-http.mjs`, without
   mocking fetch. Supply fixture credentials over stdin only and clear the child

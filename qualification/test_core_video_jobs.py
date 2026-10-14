@@ -13,6 +13,7 @@ import socket
 import subprocess
 import sys
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 from uuid import uuid4
@@ -62,6 +63,11 @@ def video_body(mode, api, mp4, tmp_path, monkeypatch):
     frames = 121 if appearance else 9
     model = "LTX-2.5 Dev BF16 Ingredients" if appearance else MODEL
     if appearance:
+        # Appearance is a private qualification lane, not public BF16 admission.
+        settings = api[3]
+        settings.media_async_admission_mode = "pilot"
+        settings.media_async_canary_accounts = [api[1]]
+        settings.media_async_canary_until = datetime.now(UTC) + timedelta(minutes=15)
         api[-1].return_value = [model]
         # Fixture tariff only; the actual Ingredients recipe stays dark/unpriced.
         monkeypatch.setitem(
